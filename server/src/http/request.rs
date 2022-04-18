@@ -1,4 +1,4 @@
-use super::method::Method;
+use super::method::{Method, MethodError};
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Debug, Result as FmtResult};
 use std::error::Error;
@@ -39,10 +39,40 @@ impl TryFrom<&[u8]> for Request {
 
         // the above is equivalent to this because we implemented From<Utf8Error>
         let request = str::from_utf8(buf).or(Err(ParseError::InvalidEncoding))?;
+        
+        // if the option is some it will convert it to an Ok result
+        // we're also doing some variable shadowing here meaning `request` is no longer usable
+        let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+
+        // check requests are valid and extract the bytes needed 
+        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+        let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+
+        if protocol != "HTTP/1.1" {
+            return Err(ParseError::InvalidProtocol);
+        }
+        
+        // parse the method string
+        let method: Method = method.parse()?;
+
         unimplemented!();
     }
 }
 
+fn get_next_word(request: &str) -> Option<(&str, &str)>{
+    
+    // chars is an iterator that returns either Next or None
+    // and to get the index use enumerate which returns a tuple
+    for (i, c) in request.chars().enumerate() {
+
+        // check if the char is a space or a carriage return
+        if c == ' ' || c == '\r' {
+            return Some((&request[..i], &request[i + 1..]));
+        }
+    }
+
+    None
+}
 
 // represent different parsing errors we might encounter
 pub enum ParseError {
@@ -92,4 +122,10 @@ impl From<Utf8Error> for ParseError {
         Self::InvalidEncoding
     }
 }
-impl Error for ParseError {}
+
+// allows us to use MethodError from method.rs
+impl From<MethodError> for ParseError {
+    fn from(_: MethodError) -> Self {
+        Self::InvalidMethod
+    }
+}
