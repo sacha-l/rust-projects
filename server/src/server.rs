@@ -1,7 +1,7 @@
+// go to the root of a crate
+use crate::http::{Request, Response, StatusCode};
 use std::net::TcpListener;
 use std::io::Read;
-// go to the root of a crate
-use crate::http::Request;
 use std::convert::TryFrom;
 use std::convert::TryInto;
 
@@ -48,16 +48,30 @@ impl Server {
                             // from std::convert::TryFrom;
                             // because TryFrom implementation is generic we have to explicitly convert the byte slice
                             // we create a byte slice that contains the buffer array
-                            match Request::try_from(&buffer[..]) {
-                                Ok(request) => {},
-                                Err(e) => println!("Failed to process this request: {}", e)
+                            let response = match Request::try_from(&buffer[..]) {
+                                Ok(request) => {
+                                    dbg!(request);
 
-                            }
-                            let res:  &Result<Request, _> = &buffer[..].try_into();
-                        },
+                                    // build the `Ok` case
+                                    Response::new(
+                                        StatusCode::Ok, 
+                                        Some("<h1>It works!</h1>".to_string()),
+                                    )
+                                }
+                                // build `Err` case
+                                Err(e) => {
+                                    println!("Failed to parse request: {}", e);
+                                    Response::new(StatusCode::BadRequest, None)
+                                }
+                            };
+
+                                // only if there's an error do we write the stream
+                                if let Err(e) = response.send(&mut stream) {
+                                    println!("Failed to send response: {}", e);
+                                }
+                        }
                         Err(e) => println!("Failed to read from connection: {}", e),
                     }
-
                 },
                 //match the error case
                 Err(e) => println!("Failed to establish a connection: {}", e),
