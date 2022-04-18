@@ -16,7 +16,9 @@ impl Response {
 
     // write response directly to the stream so that we don't need to manage
     // memory allocations on the server 
-    pub fn send(&self, stream: &mut TcpStream) -> IoResult<()> {
+    // dynamic dispatch: the concrete implementation of the type will happen at runtime - use `dyn`
+    // static dispatch: compiler resolves all concrete implementations - use `impl`
+    pub fn send(&self, stream: &mut impl Write) -> IoResult<()> {
         let body = match &self.body {
             Some(b) => b,
             None => "",
