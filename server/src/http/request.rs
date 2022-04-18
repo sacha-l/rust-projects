@@ -45,7 +45,8 @@ impl TryFrom<&[u8]> for Request {
         let (method, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
         // check requests are valid and extract the bytes needed 
-        let (path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
+        // path is mutable because we later reassign a value to it in the match pattern
+        let (mut path, request) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
         let (protocol, _) = get_next_word(request).ok_or(ParseError::InvalidRequest)?;
 
         if protocol != "HTTP/1.1" {
@@ -55,6 +56,14 @@ impl TryFrom<&[u8]> for Request {
         // parse the method string
         let method: Method = method.parse()?;
 
+        // assume its None and only match i if Some
+        let mut query_string = None;
+        if let Some(i) = path.find('?') {
+            // plus one byte
+            query_string = Some(&path[i +1..]);
+            path = &path[..i];
+        }
+        
         unimplemented!();
     }
 }
