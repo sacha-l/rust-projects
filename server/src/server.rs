@@ -2,6 +2,9 @@ use std::net::TcpListener;
 use std::io::Read;
 // go to the root of a crate
 use crate::http::Request;
+use std::convert::TryFrom;
+use std::convert::TryInto;
+
 
 // we have to state what in this mod is public
 // what data needs to be associated 
@@ -41,6 +44,16 @@ impl Server {
                             // log the request we receive
                             // convert the bytes to string
                             println!("Received a request: {}", String::from_utf8_lossy(&buffer));
+                            
+                            // from std::convert::TryFrom;
+                            // because TryFrom implementation is generic we have to explicitly convert the byte slice
+                            // we create a byte slice that contains the buffer array
+                            match Request::try_from(&buffer[..]) {
+                                Ok(request) => {},
+                                Err(e) => println!("Failed to process this request: {}", e)
+
+                            }
+                            let res:  &Result<Request, _> = &buffer[..].try_into();
                         },
                         Err(e) => println!("Failed to read from connection: {}", e),
                     }
