@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+#[derive(Debug)]
 pub enum Method {
     // add e.g. ` = 3` to control what index each has in memory
     GET,
