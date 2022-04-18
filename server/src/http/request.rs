@@ -5,9 +5,11 @@ use std::error::Error;
 use std::str;
 use std::str::Utf8Error;
 
-pub struct Request {
-    path: String,
-    query_string: Option<String>,
+// to use lifetimes we must make Request generic
+pub struct Request<'buf> {
+    // this is a reference with 'a lifetime
+    path: &'buf str,
+    query_string: Option<&'buf str>,
     method: Method,
 }
 
@@ -16,13 +18,18 @@ pub struct Request {
 // }
 
 // implement some trait on the byte array type
-// we need to pass in a concrete type 
-impl TryFrom<&[u8]> for Request {
+// we need to pass in a concrete type
+// to use the lifetime generic we must declare is on the impl.
+// lifetimes are a powerful tool for the Rust compiler to guarantee memory safety
+// lifetime params don't allow us to choose how long a value lives but that some references
+// point to the same memory and are expected to share the same lifetime
+impl <'buf> TryFrom<&'buf [u8]> for Request<'buf> {
 
     type Error = ParseError;
 
     // GET /search?name=abc&sort=1 HTTP/1.1
-    fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+    // when we call this we make sure the lifetime is not de-allocated from the buffer
+    fn try_from(buf: &'buf [u8]) -> Result<Request<'buf>, Self::Error> {
 
         // match str::from_utf8(buf) {
         //     Ok(request) => {},
@@ -63,13 +70,18 @@ impl TryFrom<&[u8]> for Request {
             query_string = Some(&path[i +1..]);
             path = &path[..i];
         }
-        
-        unimplemented!();
+    
+        Ok(Self {
+            path: path,
+            query_string,
+            method,
+        })
     }
 }
-
+// what it would look to write lifetimes explicitly
+// fn get_next_word<'a, 'b>(request: &'a str, b: &'b str) -> Option<(&'a str, &'b str)>{
 fn get_next_word(request: &str) -> Option<(&str, &str)>{
-    
+
     // chars is an iterator that returns either Next or None
     // and to get the index use enumerate which returns a tuple
     for (i, c) in request.chars().enumerate() {
