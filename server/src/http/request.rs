@@ -2,6 +2,8 @@ use super::method::Method;
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Debug, Result as FmtResult};
 use std::error::Error;
+use std::str;
+use std::str::Utf8Error;
 
 pub struct Request {
     path: String,
@@ -20,8 +22,23 @@ impl TryFrom<&[u8]> for Request {
     type Error = ParseError;
 
     // GET /search?name=abc&sort=1 HTTP/1.1
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        // we can use the unimplemented!() macro if we don't want to implement this
+    fn try_from(buf: &[u8]) -> Result<Self, Self::Error> {
+
+        // match str::from_utf8(buf) {
+        //     Ok(request) => {},
+        //     Err(_) => return Err(ParseError::InvalidEncoding),
+        // }
+
+        // // if this is a utf8 error it will tell you
+        // // otherwise it will return the custom error type
+        // // common Rust pattern: match on a result and if its an error, return `e`
+        // match str::from_utf8(buf).or(Err(ParseError::InvalidEncoding)) {
+        //     Ok(request) => {},
+        //     Err(e) => return Err(e),
+        // }
+
+        // the above is equivalent to this because we implemented From<Utf8Error>
+        let request = str::from_utf8(buf).or(Err(ParseError::InvalidEncoding))?;
         unimplemented!();
     }
 }
@@ -69,4 +86,10 @@ impl Debug for ParseError{
     }
 }
 
+// allows us to use from_utf8 in our TryFrom implementation for error handling
+impl From<Utf8Error> for ParseError {
+    fn from(_: Utf8Error) -> Self {
+        Self::InvalidEncoding
+    }
+}
 impl Error for ParseError {}
