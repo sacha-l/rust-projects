@@ -1,7 +1,17 @@
 use super::http::{Request, Response, StatusCode, Method};
 use super::server::Handler;
 
-pub struct WebsiteHandler;
+// allow handler to take a path to read HTML files
+pub struct WebsiteHandler {
+    public_path: String
+}
+
+impl WebsiteHandler {
+    pub fn new(public_path: String) -> Self {
+        Self { public_path }
+    }
+}
+
 impl Handler for WebsiteHandler {
     fn handle_request(&mut self, request: &Request) -> Response {
         //Response::new(StatusCode::Ok, Some("<h1>Test</>".to_string()))
