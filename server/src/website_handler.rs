@@ -13,9 +13,23 @@ impl WebsiteHandler {
     }
 
     fn read_file(&self, file_path: &str) -> Option<String> {
+        // we first concatonate the path
         let path = format!("{}/{}", self.public_path, file_path);
-        // this returns a string so we need to convert it to an Option using .ok()
-        fs::read_to_string(path).ok()
+        // we then get the canonical path with .. removed
+        // we make sure the path starts with the root directory
+        match fs::canonicalize(path) {
+            Ok(path) => {
+                if path.starts_with(&self.public_path) {
+                    // ok to safely read the path
+                    // this returns a string so we need to convert it to an Option using .ok()
+                    fs::read_to_string(path).ok()
+                } else {
+                    println!("Directory traversal attack attempted: {}", file_path);
+                    None
+                }
+            }
+            Err(_) => None,
+        }
     }
 }
 
