@@ -3,8 +3,6 @@ use crate::http::{Request, Response, StatusCode, ParseError};
 use std::net::TcpListener;
 use std::io::Read;
 use std::convert::TryFrom;
-use std::convert::TryInto;
-
 
 // handler trait to improve code quality
 pub trait Handler {

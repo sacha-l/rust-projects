@@ -1,10 +1,9 @@
 use super::method::{Method, MethodError};
 use std::convert::TryFrom;
 use std::fmt::{Display, Formatter, Debug, Result as FmtResult};
-use std::error::Error;
 use std::str;
 use std::str::Utf8Error;
-use super::{QueryString, QueryStringValue};
+use super::QueryString;
 
 // to use lifetimes we must make Request generic
 #[derive(Debug)]
