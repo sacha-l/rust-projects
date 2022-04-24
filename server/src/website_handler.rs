@@ -27,6 +27,13 @@ impl Handler for WebsiteHandler {
             Method::GET => match request.path() {
                 "/" => Response::new(StatusCode::Ok, self.read_file("index.html")),
                 "/hello" => Response::new(StatusCode::Ok, self.read_file("hello.html")),
+                // we want to match any path and render the page if it exists, throwing an error if not
+                // below works, but introduces a directory traversal attack: we don't validate the user input at all
+                // we hope the user doesn't do: GET /../../system_files (they have access to the entire pc running the server)
+                path => match self.read_file(path) {
+                    Some(contents) => Response::new(StatusCode::Ok, Some(contents)),
+                    None => Response::new(StatusCode::NotFound, None)
+                }
                 _ => Response::new(StatusCode::NotFound, None),
             }
             _ => Response::new(StatusCode::NotFound, None),
