@@ -127,7 +127,7 @@ impl App {
             warn!("block with id: {} has wrong previous hash", block.id);
             return false;
         } else if !hash_to_binary_representation(
-            &hex::decode(&block.hash).expect("can decode from hex"),
+            &hex::decode(&block.hash).expect("can't decode from hex"),
         )
         .starts_with(DIFFICULTY_PREFIX)
         {
